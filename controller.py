@@ -69,12 +69,16 @@ class ShardHandler(object):
             os.mkdir("data")
         with open(f"data/{num}.txt", 'w') as s:
             s.write(data)
+        if num == 0:
+            start = 0
+        else:
+            start = self.mapping[str(num - 1)]["end"]
 
         self.mapping.update(
             {
                 str(num): {
-                    'start': num * len(data),
-                    'end': (num + 1) * len(data)
+                    'start': start,
+                    'end': start + len(data)
                 }
             }
         )
@@ -213,19 +217,40 @@ class ShardHandler(object):
         """A helper function to view the mapping data."""
         return self.mapping
 
+    def where_and_what_word_at(self,index):
+        f = None 
+        shard_num = None
+        for key in self.mapping.keys():
+            if index >= self.mapping[key]["start"] and index < self.mapping[key]["end"]:
+                f = f"{key}.txt"
+                shard_num = key
+        index_in_shard = index - self.mapping[shard_num]["start"]
+        with open(f"data/{f}", 'r') as shard:
+            text = shard.read()
+            shard_slice = text[index_in_shard:]
+            word = shard_slice.split()[0]
+            if not shard_slice.startswith(" "):
+                i = 1
+                while text[index_in_shard - i].isalpha() and index_in_shard - i >= 0:
+                    word = text[index_in_shard - i] + word
+                    i += 1
+        return (f, word)
 
 s = ShardHandler()
 
 s.build_shards(5, load_data_from_file())
 
-print(s.mapping.keys())
+# print(s.mapping.keys())
 
 # s.add_shard()
-s.remove_shard()
+# s.remove_shard()
 
 
-print(s.mapping.keys())
+# print(s.mapping.keys())
 
 # s.add_replication()
-# s.add_replication()
-s.remove_replication()
+# s.remove_replication()
+
+print(s.where_and_what_word_at(2488))
+print(s.where_and_what_word_at(43))
+print(s.where_and_what_word_at(2000))
